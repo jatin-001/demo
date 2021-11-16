@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.utils.Student;
 import lombok.Getter;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -17,20 +18,28 @@ public class StudentManagementController {
             new Student(3, "Anna Smith")
     );
 
-    @GetMapping("/")
-    public List<Student> getStudentsList(){
+    // hasRole('ROLE_') hasAnyRole('ROLE_') hasAuthority('PERMISSION') hasAnyAuthority('PERMISSION')
+    @GetMapping()
+    @PreAuthorize("hasAnyRole('ADMIN', 'ADMINTRAINEE')")
+    public List<Student> getStudentsList() {
         return STUDENTS_LIST;
     }
+
     @PostMapping
-    public void registerNewStudent(@RequestBody Student student){
-        System.out.println("Added student : "+student);
+    @PreAuthorize("hasAuthority('student:write')")
+    public void registerNewStudent(@RequestBody Student student) {
+        System.out.println("Added student : " + student);
     }
-    @DeleteMapping(path="{studentId}")
+
+    @DeleteMapping(path = "{studentId}")
+    @PreAuthorize("hasAuthority('student:write')")
     public void deleteNewStudent(@PathVariable("studentId") int studentId) {
-        System.out.println("Deleted student: "+ studentId);
+        System.out.println("Deleted student: " + studentId);
     }
-    @PutMapping(path="{studentId}")
-    public void updateStudent(@PathVariable("studentId") Integer studentId, @RequestBody Student student){
-        System.out.printf("Updated %d id to %s",studentId, student);
+
+    @PutMapping(path = "{studentId}")
+    @PreAuthorize("hasAuthority('student:write')")
+    public void updateStudent(@PathVariable("studentId") Integer studentId, @RequestBody Student student) {
+        System.out.printf("Updated %d id to %s", studentId, student);
     }
 }
