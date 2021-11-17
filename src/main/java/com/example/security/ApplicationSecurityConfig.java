@@ -1,9 +1,12 @@
 package com.example.security;
 
+import com.example.services.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -11,9 +14,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.example.security.ApplicationUserPermission.*;
 import static com.example.security.ApplicationUserRole.*;
@@ -22,8 +28,15 @@ import static com.example.security.ApplicationUserRole.*;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
-    @Autowired
+    final
     PasswordEncoder passwordEncoder;
+    final
+    ApplicationUserService applicationUserService;
+
+    public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService) {
+        this.passwordEncoder = passwordEncoder;
+        this.applicationUserService = applicationUserService;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -38,28 +51,25 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .formLogin()
                 .loginPage("/login").permitAll()
-                .defaultSuccessUrl("/courses",true).and()
-                .rememberMe();
+                .defaultSuccessUrl("/courses")
+                .and().rememberMe()
+                .and()
+                .logout()
+                .logoutUrl("/signout")
+                .clearAuthentication(true)
+                .deleteCookies("remember-me","JSESSIONID")
+                .logoutSuccessUrl("/login");
+    }
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider(){
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+        return provider;
     }
 
     @Override
-    @Bean
-    protected UserDetailsService userDetailsService() {
-        UserDetails user1 = User.builder().username("annasmith").password(passwordEncoder.encode("password"))
-                .authorities(STUDENT.getGrantedAuthorities())
-                .build();
-//                .roles(STUDENT.name()).build();  //ROLE_STUDENT
-        UserDetails user2 = User.builder().username("linda").password(passwordEncoder.encode("password"))
-                .authorities(ADMIN.getGrantedAuthorities())
-                .build();
-//                .roles(ADMIN.name()).build();    //ROLE_ADMIN
-        UserDetails user3 = User.builder().username("tom").password(passwordEncoder.encode("password"))
-                .authorities(ADMINTRAINEE.getGrantedAuthorities())
-                .build();
-//                .roles(ADMINTRAINEE.name()).build(); //ROLE_ADMINTRAINEE
-
-        return new InMemoryUserDetailsManager(user1, user2, user3);
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
     }
-
-
 }

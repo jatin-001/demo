@@ -15,4 +15,8 @@ public class TemplateController {
     public String getCourses(){
         return "courses";
     }
+    @GetMapping("/successfulLogout")
+    public String successfulLogoutPage(){
+        return "SuccessfulLogout";
+    }
 }
