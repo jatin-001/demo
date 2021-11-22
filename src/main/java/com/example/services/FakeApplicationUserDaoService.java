@@ -16,8 +16,12 @@ import static com.example.security.ApplicationUserRole.*;
 @Repository("fake")
 public class FakeApplicationUserDaoService implements ApplicationUserDao {
 
-    @Autowired
+    final
     PasswordEncoder passwordEncoder;
+
+    public FakeApplicationUserDaoService(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public Optional<ApplicationUser> selectApplicationUserByUsername(String username) {
@@ -35,13 +39,15 @@ public class FakeApplicationUserDaoService implements ApplicationUserDao {
                         true,
                         true
                 ),
-                new ApplicationUser(ADMIN.getGrantedAuthorities(),"linda",passwordEncoder.encode("password"),
+                new ApplicationUser(ADMIN.getGrantedAuthorities(),"linda",
+                        passwordEncoder.encode("password"),
                         true,
                         true,
                         true,
                         true
                 ),
-                new ApplicationUser(ADMINTRAINEE.getGrantedAuthorities(),"tom",passwordEncoder.encode("password"),
+                new ApplicationUser(ADMINTRAINEE.getGrantedAuthorities(),"tom",
+                        passwordEncoder.encode("password"),
                         true,
                         true,
                         true,
